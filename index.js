@@ -3,7 +3,6 @@ let history = []
 let tempNumber = ''
 let operationType = ''
 let isPercent = false
-let isEqual = false
 
 calculator.addEventListener('click', event => {
 	const target = event.target
@@ -17,6 +16,7 @@ calculator.addEventListener('click', event => {
 
 // Обработка нажатых клавиш на калькуляторе
 function operationTypeHandling(data) {
+	let stringMath = history.toString().replace(/,/g, '')
 	if (data >= 0) {
 		operationType = 'number'
 		tempNumber = tempNumber === '0' ? data : tempNumber + data
@@ -43,10 +43,10 @@ function operationTypeHandling(data) {
 		tempNumber = '0'
 		isPercent = false
 	} else if (data === '%') {
-		isEqual = false
 		isPercent = true
 		if (history.length > 1) {
-			tempNumber = calculate(history, isPercent, isEqual)
+			stringMath = stringMath.substring(0, stringMath.length - 1)
+			tempNumber = calculate(parseCalculationString(stringMath), isPercent)
 		} else {
 			tempNumber = tempNumber / 100
 		}
@@ -54,8 +54,8 @@ function operationTypeHandling(data) {
 		if (!isPercent) {
 			history.push(tempNumber)
 		}
-		isEqual = true
-		tempNumber = calculate(history, isPercent, isEqual)
+		stringMath = stringMath + tempNumber
+		tempNumber = calculate(parseCalculationString(stringMath), isPercent)
 		history = []
 		isPercent = false
 	}
@@ -82,93 +82,85 @@ function renderHistory(historyArray) {
 	historyBlock.innerHTML = htmlElements
 }
 
+// Перевод введённого выражения в строку
+function parseCalculationString(s) {
+	let calculation = [],
+		current = ''
+	for (let i = 0, ch; (ch = s.charAt(i)); i++) {
+		if ('*/+-'.indexOf(ch) > -1) {
+			if (current == '' && ch == '-') {
+				current = '-'
+			} else {
+				calculation.push(parseFloat(current), ch)
+				current = ''
+			}
+		} else {
+			current += s.charAt(i)
+		}
+	}
+	if (current != '') {
+		calculation.push(parseFloat(current))
+	}
+	return calculation
+}
+
 // Подсчет конечного значения
-function calculate(historyArray, isPercent, isEqual) {
-	let total = 0
-	historyArray.forEach((item, idx) => {
-		// console.log(item, idx)
-		// console.log(total)
-		item = parseFloat(item)
-		if (idx === 0) {
-			total = item
-		} else if (idx - 2 >= 0) {
-			const prevItem = historyArray[idx - 1]
-			if (item >= 0) {
-				if (prevItem === '+') {
-					total = total + item
-				} else if (prevItem === '-') {
-					total = total - item
-				} else if (prevItem === '*') {
-					total = total * item
-				} else if (prevItem === '/') {
-					total = total / item
-				} else if (prevItem === '%') {
-					total = (total / 100) * item
-				}
+function calculate(calc, isPercent) {
+	let total
+	let ops = [
+			{ '*': (a, b) => a * b, '/': (a, b) => a / b },
+			{ '+': (a, b) => a + b, '-': (a, b) => a - b },
+		],
+		newCalc = [],
+		currentOp
+	for (let i = 0; i < ops.length; i++) {
+		for (let j = 0; j < calc.length; j++) {
+			if (ops[i][calc[j]]) {
+				currentOp = ops[i][calc[j]]
+			} else if (currentOp) {
+				newCalc[newCalc.length - 1] = currentOp(
+					newCalc[newCalc.length - 1],
+					calc[j]
+				)
+				currentOp = null
+			} else {
+				newCalc.push(calc[j])
 			}
 		}
-
+		calc = newCalc
+		newCalc = []
+	}
+	if (calc.length > 1) {
+		console.log('Ошибка: невозможно решить выражение')
+		return calc
+	} else {
 		if (isPercent) {
-			const x = total
-			const operation = historyArray[idx - 1]
+			const x = calc[0]
 			const n = parseFloat(tempNumber)
 			total = calculatePercent(x, n)
+			return checkZeros(String(total))
+		} else {
+			return checkZeros(String(calc[0]))
 		}
-		// if (historyArray.length) {
-		// 	console.log(historyArray.length)
-		// 	console.log(historyArray)
-		// }
-	})
-	return String(total)
+	}
 }
 
 // Пересчёт процента, когда нажат процент
 function calculatePercent(x, n) {
-	console.log(x, n)
-	let total = x * (n / 100)
 	isPercent = false
-	return total
+	return x * (n / 100)
 }
 
-// Пересчёт процента, когда нажали равно, после нажатия процента
-// function calculatePercentWhenPushEqual(x, operation, n) {
-// 	let total = 0
-// 	if (operation === '+') {
-// 		total = x + (n / 100) * x
-// 	} else if (operation === '-') {
-// 		total = x - (n / 100) * x
-// 	} else if (operation === '*') {
-// 		total = x * (n / 100)
-// 	} else if (operation === '/') {
-// 		total = x / (n / 100)
-// 	}
-// 	return total
-// }
-
-// Логика просчета процентов на калькуляторе
-// x - число слева
-// n - число справа
-
-/* Сложение */
-// Нажали процент
-// x * (n / 100) // 10 + 10 => 10 * (10 / 100) = 1
-// Нажали процент, затем равно
-// x + (n / 100) * x // 10 + 10 => 10 + (10 / 100 * 10) = 11
-
-/* Вычитание */
-// Нажали процент
-// x * (n / 100) // 10 - 10 => 10 * (10 / 100) = 1
-// Нажали процент, затем равно
-// x - (n / 100) * x // 10 - 10 => 10 - (10 / 100 * 10 = 9
-
-/* Умножение */
-// Нажали процент
-// n / 100 // 10 * 10 => 10 / 100 = 0,1
-// Нажали процент, затем равно
-// x * (n / 100) // 10 * 10 => 10 * (10 / 100) = 1
-
-/* Деление */
-// Нажали процент
-// n / 100 // 10 / 10 => 10 / 100 = 0,1
-// Нажали процент, затем равно
-// x / (n / 100) // 10 / (10 / 100) = 1
+// Посчитать кол-во нулей после точки и удалить, если их много
+function checkZeros(calc) {
+	let afterDot = calc.split('.')
+	if (String(afterDot[1]).split('0').length - 1 > 3) {
+		return (
+			String(afterDot[0]) +
+			'.' +
+			String(afterDot[1]).substring(0, afterDot[1].indexOf('0'))
+		)
+	} else {
+		return calc
+	}
+}
