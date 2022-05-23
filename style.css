@@ -10,6 +10,9 @@
 	--actions_light: #e9f6ff;
 	--display_dark: #00223a;
 	--actions_dark: #001b2f;
+
+	/* Transition */
+	--transition: all 0.3s ease-in-out;
 }
 
 * {
@@ -26,10 +29,12 @@ body {
 
 /* Calculator */
 .calculator {
+	position: relative;
 	width: 320px;
 	border-radius: 20px;
 	overflow: hidden;
 	box-shadow: 8px 32px 64px rgba(0, 0, 0, 0.3);
+	transition: var(--transition);
 }
 .calculator__display {
 	padding: 20px 24px;
@@ -37,6 +42,7 @@ body {
 	margin-bottom: -24px;
 	background-color: var(--display_light);
 	text-align: right;
+	transition: var(--transition);
 }
 .calculator__history {
 	font-size: 24px;
@@ -57,6 +63,48 @@ body {
 	border-radius: 20px;
 	background-color: var(--actions_light);
 	font-size: 24px;
+	transition: var(--transition);
+}
+.calculator__history-panel {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	right: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	padding: 20px 24px;
+	height: 100%;
+	background-color: var(--light);
+	color: var(--dark);
+	transition: var(--transition);
+}
+.calculator__history-panel.open {
+	top: 0;
+}
+.calculator__history-content {
+	text-align: right;
+}
+.calculator__history-content > div:not(:last-child) {
+	padding-bottom: 8px;
+	margin-bottom: 16px;
+	border-bottom: 1px solid var(--dark);
+}
+.calculator__history-close {
+	--size: 20px;
+	cursor: pointer;
+	position: absolute;
+	top: 16px;
+	left: 16px;
+	font-size: calc(var(--size) / 1.4);
+	line-height: calc(var(--size) / 1.1);
+	text-align: center;
+	width: var(--size);
+	height: var(--size);
+	border-radius: var(--size);
+	border: 1px solid var(--primary);
+	color: var(--primary);
+	background-color: var(--light);
 }
 .calculator__row {
 	display: flex;
@@ -89,4 +137,40 @@ body {
 }
 .calculator_dark .calculator__actions {
 	background-color: var(--actions_dark);
+}
+.calculator_dark .calculator__history-panel {
+	background-color: var(--dark);
+	color: var(--light);
+}
+.calculator_dark .calculator__history-close {
+	background-color: var(--dark);
+}
+.calculator_dark .calculator__history-content > div:not(:last-child) {
+	border-bottom: 1px solid var(--light);
+}
+
+/* Theme */
+.theme {
+	--size: 20px;
+	width: var(--size);
+	height: var(--size);
+	font-size: var(--size);
+	cursor: pointer;
+	position: absolute;
+	top: 16px;
+	left: 16px;
+	display: flex;
+	overflow: hidden;
+	align-items: center;
+	color: var(--light);
+	transition: var(--transition);
+}
+.theme i {
+	transition: var(--transition);
+}
+.theme_dark {
+	color: var(--dark);
+}
+.theme_dark i:first-child {
+	margin-left: calc(var(--size) * -1);
 }

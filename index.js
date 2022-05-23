@@ -1,4 +1,6 @@
 const calculator = document.querySelector('.calculator')
+const calculatorClearBlock = document.getElementById('calculator-clear')
+let allHistory = []
 let history = []
 let tempNumber = ''
 let operationType = ''
@@ -8,15 +10,21 @@ calculator.addEventListener('click', event => {
 	const target = event.target
 	if (target.classList.contains('calculator__col')) {
 		const data = target.dataset.type
+		const totalBlock = calculator.querySelector('.calculator__total')
+		const historyBlock = calculator.querySelector('.calculator__history')
 		operationTypeHandling(data)
-		renderTotal(tempNumber)
-		renderHistory(history)
+		totalBlock.innerHTML = tempNumber
+		historyBlock.innerHTML = renderHistory(history)
+		historyPanelRender(allHistory)
 	}
 })
 
 // Обработка нажатых клавиш на калькуляторе
 function operationTypeHandling(data) {
 	let stringMath = history.toString().replace(/,/g, '')
+	if (data !== 'clear' && data !== 'history') {
+		calculatorClearBlock.innerHTML = 'C'
+	}
 	if (data >= 0) {
 		operationType = 'number'
 		tempNumber = tempNumber === '0' ? data : tempNumber + data
@@ -42,6 +50,14 @@ function operationTypeHandling(data) {
 		history = []
 		tempNumber = '0'
 		isPercent = false
+		if (calculatorClearBlock.innerText === 'C') {
+			calculatorClearBlock.innerHTML = 'CA'
+		} else {
+			calculatorClearBlock.innerHTML = 'C'
+			allHistory = []
+		}
+	} else if (data === 'history') {
+		openHistoryPanel()
 	} else if (data === '%') {
 		isPercent = true
 		if (history.length > 1) {
@@ -51,25 +67,22 @@ function operationTypeHandling(data) {
 			tempNumber = tempNumber / 100
 		}
 	} else if (data === '=') {
+		const historySegment = []
 		if (!isPercent) {
 			history.push(tempNumber)
 		}
+		historySegment.push(history)
 		stringMath = stringMath + tempNumber
 		tempNumber = calculate(parseCalculationString(stringMath), isPercent)
+		historySegment.push(tempNumber)
+		allHistory.push(historySegment)
 		history = []
 		isPercent = false
 	}
 }
 
-// Отрисовка текущего значения на экране калькулятора
-function renderTotal(value) {
-	const totalBlock = calculator.querySelector('.calculator__total')
-	totalBlock.innerHTML = value
-}
-
 // Формирование HTML-кода и вывода блока истории операций
 function renderHistory(historyArray) {
-	const historyBlock = calculator.querySelector('.calculator__history')
 	let htmlElements = ''
 	historyArray.forEach(item => {
 		if (item >= 0) {
@@ -79,7 +92,23 @@ function renderHistory(historyArray) {
 			htmlElements = htmlElements + `&nbsp;<strong>${item}</strong>`
 		}
 	})
-	historyBlock.innerHTML = htmlElements
+	return htmlElements
+}
+
+// Функция отрисовки всей истории в панели истории
+function historyPanelRender(allHistory) {
+	const historyContent = document.getElementById('history-content')
+	let historyPanelHtml = ''
+	allHistory.forEach(item => {
+		const html = ` <div>
+				<div class="calculator__history">
+					${renderHistory(item[0])}
+				</div>
+				<div class="calculator__total">${item[1]}</div>
+			</div>`
+		historyPanelHtml = historyPanelHtml + html
+	})
+	historyContent.innerHTML = historyPanelHtml
 }
 
 // Перевод введённого выражения в строку
@@ -163,4 +192,29 @@ function checkZeros(calc) {
 	} else {
 		return calc
 	}
+}
+
+// Переключение темы калькулятора Светлая/Темная
+const theme = document.querySelector('.theme')
+theme.onclick = () => {
+	if (theme.classList.contains('theme_dark')) {
+		theme.classList.remove('theme_dark')
+		calculator.classList.add('calculator_dark')
+	} else {
+		theme.classList.add('theme_dark')
+		calculator.classList.remove('calculator_dark')
+	}
+}
+
+// Открытие/Скрытие панели истории
+const historyPanel = document.getElementById('history-panel')
+const closeHistoryBtn = historyPanel.querySelector('#close')
+
+closeHistoryBtn.onclick = () => {
+	historyPanel.classList.remove('open')
+}
+
+// Функция открытия панели истории
+function openHistoryPanel() {
+	historyPanel.classList.add('open')
 }
