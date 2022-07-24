@@ -1,1 +1,1 @@
-# [Открыть калькулятор](https://andreyzhitenev.github.io/calculator/)
+# [Open calculator](https://twiar.github.io/calculator/)
